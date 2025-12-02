@@ -8,7 +8,9 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    if: github.repository == 'ryotakusakabe/sync-repo-private'
+    if: github.repository != 'ryotakusakabe/sync-repo-public'
+    env:
+      PUBLIC_REPO: ryotakusakabe/sync-repo-public
     steps:
       - name: Checkout source repository
         uses: actions/checkout@v4
@@ -18,5 +20,30 @@ jobs:
 
       - name: Push to OSS repository
         run: |
-          git remote add public "https://${{ secrets.OSS_PAT }}@github.com/ryotakusakabe/sync-repo-public.git"
+          git remote add public "https://${{ secrets.OSS_PAT }}@github.com/${{ env.PUBLIC_REPO }}.git"
           git push public main:release_from_sss
+
+      - name: Create Pull Request in OSS repository
+        env:
+          GH_TOKEN: ${{ secrets.OSS_PAT }}
+        run: |
+          # Check if PR already exists
+          existing_pr=$(gh pr list \
+            --repo ${{ env.PUBLIC_REPO }} \
+            --head release_from_sss \
+            --base main \
+            --json number \
+            --jq '.[0].number')
+          
+          if [ -n "$existing_pr" ]; then
+            echo "Pull request already exists: #$existing_pr"
+            exit 0
+          fi
+          
+          gh pr create \
+            --repo ${{ env.PUBLIC_REPO }} \
+            --head release_from_sss \
+            --base main \
+            --title "Sync from private repository" \
+            --body "Automated sync from private repository"
+          echo "Pull request created"
