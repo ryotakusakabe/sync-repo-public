@@ -1,0 +1,22 @@
+name: Sync to SSS Repository
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    if: github.repository == 'ryotakusakabe/sync-repo-private'
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Push to OSS repository
+        run: |
+          git remote add public "https://${{ secrets.OSS_PAT }}@github.com/ryotakusakabe/sync-repo-public.git"
+          git push public main:release_from_sss
