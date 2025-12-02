@@ -8,6 +8,7 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    if: github.repository == 'ryotakusakabe/sync-repo-private'
     steps:
       - name: Checkout source repository
         uses: actions/checkout@v4
